@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Campus Lost & Found</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="header">
+    <h1>Campus Lost & Found Portal</h1>
+</div>
+
+<button class="admin-btn" onclick="window.location.href='login.html'">Admin Login</button>
+
+<div class="form-container">
+    <h2>Submit Lost or Found Item</h2>
+    <form id="itemForm" enctype="multipart/form-data">
+        <label>Type:</label>
+        <select name="type" required>
+            <option value="Lost">Lost</option>
+            <option value="Found">Found</option>
+        </select>
+
+        <label>Item Name:</label>
+        <input type="text" name="itemName" required>
+
+        <label>Description:</label>
+        <textarea name="description" required></textarea>
+
+        <label>Upload Image:</label>
+        <input type="file" name="image" accept="image/*" required>
+
+        <label>Your Contact:</label>
+        <input type="text" name="contact" required>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <button onclick="window.location.href='items.html'">View Submitted Items</button>
+</div>
+
+<script>
+    document.getElementById("itemForm").addEventListener("submit", function(e){
+        e.preventDefault();
+        let formData = new FormData(this);
+        fetch("/api/items", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => {
+            if (res.ok) {
+                alert("Item submitted successfully!");
+                this.reset();
+            } else {
+                alert("Failed to submit item.");
+            }
+        });
+    });
+</script>
+</body>
+</html>

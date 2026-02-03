@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Campus Lost & Found - Items</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .items-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .item-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 280px;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .item-card img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 5px 10px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn {
+            background: red;
+            color: white;
+        }
+        .delete-btn:hover {
+            background: darkred;
+        }
+        .edit-btn {
+            background: #007bff;
+            color: white;
+        }
+        .edit-btn:hover {
+            background: #0056b3;
+        }
+        .edit-form {
+            margin-top: 10px;
+            display: none;
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .edit-form input, .edit-form textarea, .edit-form select {
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+<h2>Submitted Items</h2>
+<button onclick="logout()">Logout</button>
+<div class="items-container" id="itemsContainer"></div>
+
+<script>
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+
+    function fetchItems() {
+        fetch("/api/items")
+            .then(res => res.json())
+            .then(items => {
+                const container = document.getElementById("itemsContainer");
+                container.innerHTML = "";
+                items.forEach(item => {
+                    const card = document.createElement("div");
+                    card.className = "item-card";
+                    card.innerHTML = `
+                        <h3>${item.itemName} (${item.type})</h3>
+                        <img src="data:image/jpeg;base64,${item.image}" alt="Item Image">
+                        <p><strong>Description:</strong> ${item.description}</p>
+                        ${isAdmin ? `
+                            <button class="btn edit-btn" onclick="toggleEditForm(${item.id})">Edit</button>
+                            <button class="btn delete-btn" onclick="deleteItem(${item.id})">Delete</button>
+                            <div class="edit-form" id="editForm-${item.id}">
+                                <select id="type-${item.id}">
+                                    <option value="Lost" ${item.type === 'Lost' ? 'selected' : ''}>Lost</option>
+                                    <option value="Found" ${item.type === 'Found' ? 'selected' : ''}>Found</option>
+                                </select>
+                                <input type="text" id="name-${item.id}" value="${item.itemName}" required>
+                                <textarea id="desc-${item.id}" required>${item.description}</textarea>
+                                <input type="text" id="contact-${item.id}" value="${item.contact}" required>
+                                <button class="btn edit-btn" onclick="saveEdit(${item.id})">Save</button>
+                            </div>
+                        ` : ""}
+                    `;
+                    container.appendChild(card);
+                });
+            });
+    }
+
+    function toggleEditForm(id) {
+        const form = document.getElementById(`editForm-${id}`);
+        form.style.display = form.style.display === "block" ? "none" : "block";
+    }
+
+    function saveEdit(id) {
+        const updatedData = {
+            type: document.getElementById(`type-${id}`).value,
+            itemName: document.getElementById(`name-${id}`).value,
+            description: document.getElementById(`desc-${id}`).value,
+            contact: document.getElementById(`contact-${id}`).value
+        };
+
+        fetch(`/api/items/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedData)
+        })
+        .then(res => {
+            if (res.ok) {
+                alert("Item updated successfully!");
+                fetchItems();
+            } else {
+                alert("Failed to update item.");
+            }
+        });
+    }
+
+    function deleteItem(id) {
+        if (confirm("Are you sure you want to delete this item?")) {
+            fetch(`/api/items/${id}`, { method: "DELETE" })
+                .then(res => {
+                    if (res.ok) {
+                        alert("Item deleted successfully!");
+                        fetchItems();
+                    } else {
+                        alert("Failed to delete item.");
+                    }
+                });
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem("isAdmin");
+        alert("Logged out successfully!");
+        window.location.reload();
+    }
+
+    fetchItems();
+</script>
+</body>
+</html>
